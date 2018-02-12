@@ -10,7 +10,8 @@ var fs = require('fs'),
     pathCrt = config.server.sslCrt,
     httpPort = config.server.httpPort,
     httpsPort = config.server.httpsPort,
-    urlApp = config.server.urlApp;
+    urlApp = config.server.urlApp,
+    opn = require('opn');
 
 http.createServer((req, res) => {
     res.writeHead(301, { "location": `https://${req.headers.host}:${httpsPort}${req.url}` });
@@ -21,4 +22,7 @@ app.use(compression());
 app.use(express.static(`${__dirname}/${sitio}`));
 https
     .createServer({ key: fs.readFileSync(pathKey), cert: fs.readFileSync(pathCrt) }, app)
-    .listen(httpsPort, () => console.log(`Https Puerto: ${httpsPort}`));
+    .listen(httpsPort, () => {
+        console.log(`Https Puerto: ${httpsPort}`);
+        opn(`https://127.0.0.1`);
+    });

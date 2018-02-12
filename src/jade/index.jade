@@ -55,7 +55,6 @@ html(lang='es')
 			}
 			#dvContainerJGet { display: none; }
 
-		link(rel='stylesheet' href='assets/css/main.css')
 		link(rel='manifest' href='assets/config/manifest.json')
 		link(rel='shortcut icon' href='favicon.ico')
 	body
@@ -69,3 +68,28 @@ html(lang='es')
 		footer#footerMain
 		script(src="assets/js/jmain.js" data-init="scripts/app.js" async)
 		#dvContainerJGet
+
+		noscript
+			link(href='assets/css/main.css', rel='stylesheet')
+			link(href='assets/css/vendor/vendor.css', rel='stylesheet')
+			style.
+				#block { display: none !important; }
+			header#headerMain
+				nav.navbar.navbar-dark.bg-dark
+					a.navbar-brand(href='javascript:void(0)')
+						img.d-inline-block.align-top(src='/assets/img/icon-128x128.png', width='30', height='30', alt='')
+						| My App
+			main#wrapperMain
+				article.container.mt-3
+					section.row.text-center
+						.col-xs-12.col-sm-6.col-md-4.col-lg-3
+							.card.mb-3
+								.card-body
+									h5.card-title Lo sentimos, algo no va bien.
+									p.card-text
+										|Algunas de las razones pueden ser:
+										p - No tienes javascript habilitado.
+			footer#footerMain
+				.container.text-center
+					span.text-muted
+						a(href="http://jerc91.github.io/", target="_blank") Autor
