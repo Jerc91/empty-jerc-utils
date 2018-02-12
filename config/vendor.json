@@ -1,0 +1,19 @@
+﻿[
+  "font-awesome/fonts/fontawesome-webfont.ttf",
+  "font-awesome/fonts/fontawesome-webfont.woff2",
+
+  "bootstrap/dist/css/bootstrap.css",
+  "font-awesome/css/font-awesome.css",
+  
+  {
+    "assets/fonts/roboto": [
+      "roboto-fontface/fonts/roboto/Roboto-Light.ttf",
+      "roboto-fontface/fonts/roboto/Roboto-Light.woff2"
+    ]
+  },
+  {
+    "compiler": [
+      "hogan.js/web/builds/3.0.2/hogan-3.0.2.js"
+    ]
+  }
+]

@@ -1,0 +1,71 @@
+doctype html
+html(lang='es')
+	head
+		title My App
+
+		meta(charset='UTF-8')
+		meta(name='description' content='Descripción de myApp')
+		meta(name='author' content='Julian Ruiz')
+		meta(name='layout' content='main')
+		meta(name='viewport' content='width=device-width, initial-scale=1')
+		meta(name='theme-color' content='#0f1c2e')
+		meta(name='apple-mobile-web-app-status-bar-style' content='#0f1c2e')
+
+		style.
+			#block {
+				align-items: center;
+				background-color: #2980b9;
+				bottom: 0;
+				display: flex;
+				justify-content: center;
+				left: 0;
+				position: absolute;
+				right: 0;
+				top: 0;
+				transform: scale(1);
+				will-change: transform, opacity;
+				z-index: 5;
+			}
+			#block.off {
+				opacity: 0;
+				transform: scale(0);
+			}
+			#block .a3 {
+				height: 32px;
+				position: relative;
+				width: 32px;
+			}
+			#block .a3 > div {
+				animation: cubemove 1.8s infinite ease-in-out;
+				background-color: #fff;
+				height: 10px;
+				left: 0;
+				position: absolute;
+				top: 0;
+				width: 10px;
+			}
+			#block .a3 > .cube2 {
+				animation-delay: -0.9s;
+			}
+			@keyframes cubemove {
+				25% { transform: translateX(22px) rotate(-90deg) scale(0.5); }
+				50% { transform: translateX(22px) translateY(22px) rotate(-180deg); }
+				75% { transform: translateX(0px) translateY(22px) rotate(-270deg) scale(0.5); }
+				100% { transform: rotate(-360deg); }
+			}
+			#dvContainerJGet { display: none; }
+
+		link(rel='stylesheet' href='assets/css/main.css')
+		link(rel='manifest' href='assets/config/manifest.json')
+		link(rel='shortcut icon' href='favicon.ico')
+	body
+		#block.a3.on
+			.spinner.a3
+				.cube1
+				.cube2
+		
+		header#headerMain
+		main#wrapperMain
+		footer#footerMain
+		script(src="assets/js/jmain.js" data-init="scripts/app.js" async)
+		#dvContainerJGet

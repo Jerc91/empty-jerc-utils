@@ -1,0 +1,9 @@
+[
+	{ 
+		"name": "base", 
+		"paths": [
+			"assets/css/vendor/vendor.css"
+		], 
+		"namespaces": []
+	}
+]
