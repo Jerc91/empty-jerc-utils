@@ -37,7 +37,6 @@ config.json:	Información necesaria para configurar las tareas programadas
 	paths.dev:	Ruta de la carpeta para la aplicación en modo desarrollo.
 	paths.prod:	Ruta de la carpeta para la aplicación en modo producción.
 	paths.filesUpdate:	Ruta del archivo donde se encuentran los archivos que se han modificado en el servidor y que deberan ser actualizados en el cliente.
-	paths.manifestCache:	Ruta del manifiesto de cache, para aplicaciones que usen esta tecnología.
 	paths.cacheJSON	Ruta donde se encuentra el listado de archivos que serán guardados inicialmente en la cache.
 
 	types.config 	Globs para archivos de configuración como el manifes.appcache.
@@ -55,25 +54,32 @@ config.json:	Información necesaria para configurar las tareas programadas
 
 Vendor.json;	Se especifican las rutas relativas a la ubicación del archivo gulp, estas rutas son las que se copian a la carpeta de desarrollo. Esta configuración contiene modos para la configuración de paquetes y de archivos a concatenar.
 
-	["archivo1.js", "archivo1.js"]:	Se concatenan los archivos y se crea un archivo "vendor.js" en la carpeta "/js/vendor".
+	Se concatenan los archivos y se crea un archivo "vendor.js" en la carpeta "/js/vendor".
+	["archivo1.js", "archivo1.js"]
+
+	Se concatenan los archivos y se crea un archivo "nombrePaquete.js" en la carpeta "/js/vendor".
 	{
 		"nombrePaquete": [
 			"archivo1.js", 
 			"archivo2.js"
 		]
-	}:	Se concatenan los archivos y se crea un archivo "nombrePaquete.js" en la carpeta "/js/vendor".
+	}
+
+	Se copian los archivos especificos en la ruta "assets/fonts/roboto".
 	{
 		"assets/fonts/roboto": [
 			"roboto-fontface/fonts/roboto/Roboto-Bold.ttf",
 			"roboto-fontface/fonts/roboto/Roboto-Bold.woff2"
 		]
-	}:	Se copian los archivos especificos en la ruta "assets/fonts/roboto".
+	}
+
+	Con el "@" se excluyen los registros de las demas tareas para ser copiados a la carpeta de desarrollo.
 	{
 		"views/polymer": [
 			"@paper-styles/classes/*.html"
 			"@paper-styles/*.{css,html}",
 			"@iron-meta/hero.svg"
 		]
-	}:	Con el "@" se excluyen los registros de las demas tareas para ser copiados a la carpeta de desarrollo.
+	}
 
 Uso de comandos gulp, una vez se instalen los packages mediante los comandos "npm install", y "bower install" se podrá ejecutar el comando gulp vendor (Para copiar las librerías) y luego gulp (ejecuta la tarea default), o se puede ejecutar gulp nombreTarea.

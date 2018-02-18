@@ -42,13 +42,17 @@ let currentTask = '',
         currentTask = `vendor:${type}`;
 
         let currentPackage = {},
-            pathVendor = type !== 'fonts' ? '/vendor/' : '';
+            pathVendor = type !== 'fonts' ? '/' : '';
 
         currentPackage.optionsSrc = { cwd: config.paths.packages };
         if (typeof _package === 'object') {
-            currentPackage.globs = _package.globs.filter(record => record.indexOf('@') != 0);
+            currentPackage.globs = _package.globs;
             currentPackage.name = _package.name;
-            currentPackage.path = _package.path || (config.paths.libs + type + pathVendor);
+            
+            if(!currentPackage.globs.filter(glob => glob.includes('@')).length)
+                currentPackage.path = _package.path || (config.paths.libs + type + pathVendor);
+            else
+                currentPackage.path = _package.path || '';
         } else {
             currentPackage.globs = fnGetPackages();
             currentPackage.name = config.packages.name;
@@ -57,29 +61,54 @@ let currentTask = '',
 
         if (/copy|html|sass/.test(type)) {
             if (_package.staticPath) currentPackage.optionsSrc.base = config.paths.packages;
-            if (type == 'copy') {
-                currentPackage.globs = _package.globs.filter(record => record.indexOf('@') == 0);
-                currentPackage.globs = currentPackage.globs.map(record => record = record.replace('@', ''));
-            }
         }
 
         log(`Copying base vendor ${type} assets... ${typeof _package !== 'function' ? currentPackage.name : ''}`);
 
         return currentPackage;
     }
+
+    function getGlobs(currentPackage) {
+        let globs = currentPackage.globs.map(glob => { 
+            let nuevoGlob = glob.toString();
+            if(nuevoGlob.includes('@')) {
+                nuevoGlob = nuevoGlob.replace('@', '');
+                currentPackage.optionsSrc.base = undefined;
+            }
+            return nuevoGlob;
+        });
+        return globs;
+    }
+
     // get dest path of packages
     function getPackageDestPath(currentPackage, vinylInstance, type) {
-        let endPath = `${config.paths.prod}${currentPackage.path}`;
-        del.sync(`${endPath}/${vinylInstance.relative}`);
-        return endPath;
+        let endPath = `${config.paths.prod}${currentPackage.path}`,
+            relativePath = vinylInstance.relative,
+            fixedPath;
+        
+        currentPackage.globs.filter(glob => {
+            let newPath;
+            if(glob.includes('@')) {
+                if(currentPackage.path.lastIndexOf('/') != currentPackage.path.length - 1) currentPackage.path += '/';
+                newPath = glob.substring(glob.indexOf('@') + 1).replace(/\\/g, '/');
+                if(newPath.includes(vinylInstance.relative)) {
+                    console.log(currentPackage.path);
+                    fixedPath = `${config.paths.prod}${currentPackage.path}${newPath.replace(vinylInstance.relative, '')}`;
+                }
+            }
+        });
+
+        del.sync(`${endPath}/${relativePath}`);
+        return fixedPath || endPath;
     }
 
     // public methods
     // concatSourcemap of files js
     api.buildJS = function (_package) {
-        var currentPackage = getPackage(_package, 'js');
-
-        return gulp.src(currentPackage.globs, currentPackage.optionsSrc)
+        var currentPackage = getPackage(_package, 'js'),
+            globs = getGlobs(currentPackage);
+        //if(currentPackage.name == 'compiler') return;
+        return gulp.src(globs, currentPackage.optionsSrc)
             .pipe($.plumber({ errorHandler: handleError }))
             .pipe($.filter(config.types.js))
             .pipe($.sourcemaps.init({ loadMaps: true }))
@@ -138,20 +167,28 @@ let currentTask = '',
     };
     // to copy
     api.buildCopy = function (_package) {
-        var currentPackage = getPackage(_package, 'copy');
-
-        return gulp.src(currentPackage.globs, currentPackage.optionsSrc)
+        var currentPackage = getPackage(_package, 'copy'),
+            globs = getGlobs(currentPackage);
+        
+        return gulp.src(globs, currentPackage.optionsSrc)
             .pipe($.plumber({ errorHandler: handleError }))
             .pipe(gulp.dest(vinylInstance => getPackageDestPath(currentPackage, vinylInstance)));
     };
     // resume functions
     api.buildPackage = function (_package) {
+        let globFixed = _package.globs.filter(record => record.includes('@'));
+        if(globFixed.length) {
+            let newPakage = JSON.parse(JSON.stringify(_package));
+            newPakage.globs = globFixed;
+            api.buildCopy(newPakage);
+        }
+
+        _package.globs = _package.globs.filter(record => !record.includes('@'));
         api.buildJS(_package);
         api.buildCSS(_package);
         api.buildFonts(_package);
         api.buildHTML(_package);
         api.copySass(_package);
-        _package.globs.filter(record => record.indexOf('@') == 0).length > 0 && api.buildCopy(_package);
     };
 })(vendorBuild);
 
@@ -501,8 +538,18 @@ function log(msg) {
 */
 function fnGetPackages(single = false) {
     if (typeof single == 'boolean') {
-        if (single === false) return vendorFiles.filter(record => typeof record == 'string' && record.indexOf('@') != 0);
-        if (single === true) return vendorFiles.filter(record => typeof record == 'object');
+        if (single === false) return vendorFiles.filter(record => typeof record == 'string' && !record.includes('@'));
+        if (single === true) {
+            let packages = vendorFiles.filter(record => typeof record == 'object');
+
+            if(vendorFiles.filter(record => typeof record == 'string' && record.includes('@')).length){
+                packages.push({
+                    '': vendorFiles.filter(record => typeof record == 'string' && record.includes('@'))
+                });
+            }
+
+            return packages;
+        }
     }
     if (typeof single == 'object') {
         var _package = { path: '' },

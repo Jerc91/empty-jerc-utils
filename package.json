@@ -29,10 +29,7 @@
     "dev": "gulp",
     "main": "node app"
   },
-  "dependencies": {
-    "compression": "^1.7.1",
-    "express": "^4.16.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "bower": "^1.8.2",
     "del": "^3.0.0",
@@ -45,6 +42,7 @@
     "gulp-filter": "^5.0.1",
     "gulp-flatten": "^0.3.1",
     "gulp-htmlmin": "^3.0.0",
+    "gulp-if": "^2.0.2",
     "gulp-imagemin": "^3.4.0",
     "gulp-jade": "^1.1.0",
     "gulp-jsonminify": "^1.0.0",

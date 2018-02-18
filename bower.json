@@ -20,6 +20,7 @@
     "font-awesome": "fontawesome#^4.7.0",
     "roboto-fontface": "^0.8.0",
     "hogan.js": "hogan#^3.0.2",
-    "popper.js": "^1.12.9"
+    "popper.js": "^1.12.9",
+    "jerc-utils": "*"
   }
 }

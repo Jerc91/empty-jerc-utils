@@ -34,8 +34,6 @@
   <ItemGroup>
     <Compile Include="app.js" />
     <Compile Include="gulpfile.js" />
-    <Compile Include="src\js\assets\js\jmain.js" />
-    <Compile Include="src\js\assets\js\workers\requester-tools.js" />
     <Compile Include="src\js\scripts\app.js" />
     <Compile Include="src\js\service-worker.js" />
     <Content Include="bower.json" />
@@ -84,9 +82,6 @@
     <Folder Include="src\json\assets\" />
     <Folder Include="src\json\assets\config\" />
     <Folder Include="src\js\" />
-    <Folder Include="src\js\assets\" />
-    <Folder Include="src\js\assets\js\" />
-    <Folder Include="src\js\assets\js\workers\" />
     <Folder Include="src\js\scripts\" />
     <Folder Include="src\less\" />
     <Folder Include="src\sass\" />
