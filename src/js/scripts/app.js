@@ -5,17 +5,16 @@ jr({ packages: 'assets/config/packages.json' }).then(() => myApp.main());
 myApp.addNS('main', () => {
     let api = {};
 
-    Promise.all([
-        get([
-            { src: 'views/header.html', query: '#headerMain' },
-            { src: 'views/main.html', query: '#wrapperMain' },
-            { src: 'views/footer.html', query: '#footerMain' }
-        ]),
+    get([
+        { src: 'views/header.html', query: '#headerMain' },
+        { src: 'views/main.html', query: '#wrapperMain' },
+        { src: 'views/footer.html', query: '#footerMain' },
         jr.service('base')
-    ]).then(() => {
+    ]).then(function () {
         let spinner = document.querySelector('#block');
         spinner.classList.add('off');
         spinner.classList.remove('on');
+        jr.workersCount = 3;
     });
 
     return api;

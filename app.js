@@ -37,60 +37,11 @@ http.createServer((req, res) => {
 let sercureServer = http2.createSecureServer({ cert: fs.readFileSync(pathCrt), key: fs.readFileSync(pathKey) });
 sercureServer.on('stream', (stream, headers) => {
     const
-        reqPath = headers[HTTP2_HEADER_PATH] === '/' ? '/index.html' : headers[HTTP2_HEADER_PATH],
+        strPath = url.parse(headers[HTTP2_HEADER_PATH]).pathname,
+        reqPath = strPath === '/' ? '/index.html' : headers[HTTP2_HEADER_PATH],
         reqMethod = headers[HTTP2_HEADER_METHOD],
-        fullPath = path.join(sitio, url.parse(reqPath).pathname),
+        fullPath = path.join(sitio, reqPath),
         responseMimeType = mime.lookup(fullPath);
-
-    if (fullPath.endsWith('index.html')) {
-        stream.respondWithFile(fullPath, { "content-type": responseMimeType }, {
-            onError: (err) => {
-                respondToStreamError(err, stream);
-            }
-        });
-
-        let
-            pathJmain = "/assets/js/jmain.js";
-        mimeJS = mime.lookup(pathJmain);
-        stream.pushStream({ ":path": pathJmain }, (err, pushStream, headers) => {
-            pushStream.respondWithFile(
-                path.join(sitio, pathJmain),
-                { 'content-type': mimeJS },
-                { onError: (err) => { respondToStreamError(err, pushStream); } }
-            );
-        });
-
-        return;
-    }
-    else if (fullPath.endsWith('no-save.css')) {
-        stream.respondWithFile(fullPath, { "content-type": responseMimeType }, {
-            onError: (err) => {
-                respondToStreamError(err, stream);
-            }
-        });
-
-        // fonts
-        let
-            pathfontAwesome = "/assets/fonts/fontawesome-webfont.woff2",
-            pathfontRoboto = "/assets/fonts/roboto/Roboto-Light.woff2",
-            mimeFont = mime.lookup(pathfontAwesome);
-
-        stream.pushStream({ ":path": pathfontAwesome }, (err, pushStream, headers) => {
-            pushStream.respondWithFile(
-                path.join(sitio, pathfontAwesome),
-                { 'content-type': mimeFont },
-                { onError: (err) => { respondToStreamError(err, pushStream); } }
-            );
-        });
-
-        stream.pushStream({ ":path": pathfontRoboto }, (err, pushStream, headers) => {
-            pushStream.respondWithFile(
-                path.join(sitio, pathfontRoboto),
-                { 'content-type': mimeFont },
-                { onError: (err) => { respondToStreamError(err, pushStream); } }
-            );
-        });
-    }
 
     stream.respondWithFile(fullPath, { 'content-type': responseMimeType }, {
         onError: (err) => respondToStreamError(err, stream)

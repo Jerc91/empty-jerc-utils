@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">14.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -35,7 +36,6 @@
     <Compile Include="app.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="src\js\scripts\app.js" />
-    <Compile Include="src\js\service-worker.js" />
     <Content Include="bower.json" />
     <Content Include="config\config.json" />
     <Content Include="config\indicaciones-gulp.txt" />
@@ -47,7 +47,6 @@
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="src\assets\css\main.css" />
-    <Content Include="src\assets\css\maps\main.css.map" />
     <Content Include="src\img\assets\img\icon-128x128.png" />
     <Content Include="src\img\assets\img\icon-144x144.png" />
     <Content Include="src\img\assets\img\icon-152x152.png" />
@@ -72,7 +71,6 @@
     <Folder Include="src\" />
     <Folder Include="src\assets\" />
     <Folder Include="src\assets\css\" />
-    <Folder Include="src\assets\css\maps\" />
     <Folder Include="src\img\" />
     <Folder Include="src\img\assets\" />
     <Folder Include="src\img\assets\img\" />
