@@ -457,11 +457,19 @@ function fnChangeAppChache(vinylInstance) {
             config.cache.date = moment().format('DD/MM/YYYY, h:mm:ss a');
 
             // Para service worker
-            /=(\[["'].*?\])/mg.exec(serviceWorker).forEach((match, i) => {
+            /\|['!](\d+\.\d+.\d+)["']/mg.exec(serviceWorker).forEach((match, i) => {
+                switch (i) {
+                    case 1:
+                        newValue = serviceWorker.replace(match, config.cache.version);
+                        break;
+                }
+            });
+
+            /=(\[["'].*?\])/mg.exec(newValue).forEach((match, i) => {
                 switch (i) {
                     case 1:
                         archivosProd = config.cache.files.map(archivo => archivo.replace('.jade', '.html'));
-                        newValue = serviceWorker.replace(match, JSON.stringify(archivosProd));
+                        newValue = newValue.replace(match, JSON.stringify(archivosProd));
                         break;
                 }
             });
