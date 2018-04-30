@@ -20,7 +20,8 @@
   {
     "assets/js": [
       "jerc-utils/dist/JMain/js/@jmain.js",
-      "jerc-utils/dist/JMain/js/@workers/requester-tools.js"
+      "jerc-utils/dist/JMain/js/@workers/requester-tools.js",
+      "jerc-utils/dist/JMain/js/@workers/requester-worker.js"
     ]
   },
   

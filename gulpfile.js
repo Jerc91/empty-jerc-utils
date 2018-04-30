@@ -204,7 +204,7 @@ gulp.task('vendor:packages', function () {
 });
 gulp.task('vendor', gulpsync.sync([
     'bower', 'vendor:js', 'vendor:css', 'vendor:fonts', 'vendor:packages',
-    'fonts', 'buildCSS', 'buildJade', 'min:css', 'min:html', 'min:js', 'min:img', 'min:json', 'optimize:js'
+    'fonts', 'buildSass', 'buildJade', 'min:css', 'min:html', 'min:js', 'min:img', 'min:json', 'optimize:js'
 ]));
 //--------------------------------------------------------------
 
@@ -215,56 +215,40 @@ gulp.task('fonts', function () {
     currentTask = `fonts`;
     log('Copying prod fonts assets...');
 
-    return gulp.src(config.paths.dev + config.types.fonts)
+    return gulp.src(`${config.paths.dev}${config.types.fonts}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe(gulp.dest(config.paths.prod));
 });
 //--------------------------------------------------------------
 
 //--------------------------------------------------------------
-// Función para compilar los archivos less
+// Función para compilar los archivos sass
 //--------------------------------------------------------------
-gulp.task('buildCSS', function () {
-    currentTask = `buildCSS`;
-    log('Copying dev less assets...');
+gulp.task('buildSass', function () {
+    currentTask = `buildSass`;
+    log('Building sass assets...');
+    let globs = [`!${config.paths.dev}${config.types.sass}`];
 
-    var pathSource = `${config.paths.dev}less/`,
-        pathDest = `${config.paths.dev}${config.paths.libs}css`,
-        streamCss, streamSass;
+    // Especificación de archivos
+    config.sass.forEach((record) => {
+        let name = path.basename(record),
+            nameCss = name.replace('.scss', '.css');
 
-    // Compilación del less
-    gulp.src(config.less, { cwd: pathSource, base: pathSource })
+        gulp.src(`${config.paths.dev}sass/${record}`)
+            .pipe($.plumber({ errorHandler: handleError }))
+            .pipe($.sass())
+            .pipe($.concat(nameCss))
+            .pipe(gulp.dest(`${config.paths.prod}${config.paths.libs}css`));
+
+        globs[globs.length] = '!' + record;
+    });
+
+    // Compilación del Sass
+    globs[globs.length] = `${config.paths.dev}${config.types.sass}`;
+    gulp.src(globs, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
-        .pipe($.less())
-        .on('end', sass)
-        .pipe(gulp.dest(pathDest));
-
-    function sass() {
-        var promises = [];
-
-        // Compilación del Sass
-        pathSource = `${config.paths.dev}sass/`,
-            config.sass = config.sass || [];
-
-        log('Copying dev sass assets...');
-        config.sass.forEach((record) => {
-            var name = path.basename(record),
-                nameCss = name.replace('.scss', '.css');
-
-            streamSass = gulp.src(`${pathSource}${record}`).pipe($.sass()).pipe($.concat(name));
-            streamCss = gulp.src(`${pathDest}/${nameCss}`).pipe($.concat(nameCss));
-
-            promises.push(new Promise((resolve, reject) => {
-                merge(streamCss, streamSass)
-                    .on('end', resolve)
-                    .pipe($.plumber({ errorHandler: handleError }))
-                    .pipe($.concat(nameCss))
-                    .pipe(gulp.dest(pathDest));
-            }));
-        });
-
-        Promise.all(promises).then(() => setTimeout(() => gulp.start('min:css'), 10));
-    }
+        .pipe($.sass())
+        .pipe(gulp.dest(config.paths.prod));
 });
 //--------------------------------------------------------------
 
@@ -275,7 +259,7 @@ gulp.task('min:css', function () {
     log('Copying prod css assets...');
 
     // Copia de archivos
-    return gulp.src(config.paths.dev + config.types.css)
+    return gulp.src(`${config.paths.dev}${config.types.css}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.cleanCss())
         .pipe(gulp.dest(config.paths.prod));
@@ -290,7 +274,7 @@ gulp.task('min:html', function () {
     log('Copying prod html assets...');
 
     // Copia de archivos HTML
-    gulp.src(config.paths.dev + config.types.html, { base: config.paths.dev })
+    gulp.src(`${config.paths.dev}${config.types.html}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.htmlmin({
             minifyJS: true, minifyCSS: true,
@@ -309,7 +293,7 @@ gulp.task('buildJade', function () {
     log('Building jade assets...');
 
     // Copia de archivos HTML
-    gulp.src(config.paths.dev + config.types.jade, { base: config.paths.dev + 'jade' })
+    gulp.src(`${config.paths.dev}${config.types.jade}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.jade({ petry: true }))
         .pipe($.htmlmin({
@@ -329,7 +313,7 @@ gulp.task('min:js', function () {
     currentTask = `min:js`;
     log('Copying prod js assets...');
 
-    return gulp.src(config.paths.dev + config.types.js, { base: config.paths.dev + 'js' })
+    return gulp.src(`${config.paths.dev}${config.types.js}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe(minifyJS({
             removeConsole: true,
@@ -342,7 +326,7 @@ gulp.task('min:js', function () {
 gulp.task('optimize:js', function () {
     let streams = [];
     currentTask = `optimize:js`;
-    log('Copying prod js assets...');
+    log('Optimize js assets...');
 
     return gulp.src(config.paths.prod + config.types.js)
         .pipe($.plumber({ errorHandler: handleError }))
@@ -359,7 +343,7 @@ gulp.task('min:json', function () {
     log('Copying prod json assets...');
 
     // Copia de archivos
-    gulp.src(config.paths.dev + config.types.json, { base: config.paths.dev + 'json' })
+    gulp.src(`${config.paths.dev}${config.types.json}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.jsonminify())
         .pipe(gulp.dest(config.paths.prod));
@@ -374,7 +358,7 @@ gulp.task('min:img', function () {
     log('Copying prod images assets...');
 
     // Copia de archivos
-    gulp.src(config.paths.dev + config.types.img, { base: config.paths.dev + 'img' })
+    gulp.src(`${config.paths.dev}${config.types.img}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.imagemin())
         .pipe(gulp.dest(config.paths.prod));
@@ -397,7 +381,7 @@ gulp.task('watch', function () {
     watchFiles([`${config.paths.dev}${config.types.jade}`], ['buildJade'], fnChange);
     watchFiles([`${config.paths.dev}${config.types.js}`], ['min:js'], fnChange);
     watchFiles([`${config.paths.dev}${config.types.json}`], ['min:json'], fnChange);
-    watchFiles([`${config.paths.dev}${config.types.less}`, `${config.paths.dev}${config.types.sass}`], ['buildCSS']);
+    watchFiles([`${config.paths.dev}${config.types.less}`, `${config.paths.dev}${config.types.sass}`], ['buildSass']);
 
     // Configuración de appcache
     watchFiles(config.cache.files, [], fnChangeAppChache, true);
@@ -425,7 +409,7 @@ gulp.task('watch', function () {
 //--------------------------------------------------------------
 gulp.task('default', ['watch'], function () {
     currentTask = `gulp`;
-    filesToUpdate = require(`./${config.paths.dev}json/${config.paths.libs}config/filesToUpdate.json`);
+    filesToUpdate = require(`./${config.paths.dev}${config.paths.filesUpdate}`);
     // Se ejeccuta server
     exec(config.scriptServer);
     log('Se crea servidor');
@@ -452,7 +436,7 @@ function fnChange(vinylInstance) {
         } // end else
 
         // Se guarda FilesToUpdate
-        fs.writeFileSync(`./${config.paths.dev}json/${config.paths.libs}${config.paths.filesUpdate}`, JSON.stringify(filesToUpdate, null, 4));
+        fs.writeFileSync(`./${config.paths.dev}${config.paths.filesUpdate}`, JSON.stringify(filesToUpdate, null, 4));
         log(`The file ${name} is ${vinylInstance.event}`);
         gulp.start(['min:json']);
     } catch (e) {
@@ -463,7 +447,8 @@ function fnChange(vinylInstance) {
 function fnChangeAppChache(vinylInstance) {
     try {
         // varables privadas
-        var serviceWorker = fs.readFileSync(`./${config.paths.dev}${config.paths.serviceWorker}`).toString(),
+        var serviceWorker = fs.readFileSync(`./${config.paths.prod}${config.paths.serviceWorker}`).toString(),
+            requesterTools = fs.readFileSync(`./${config.paths.prod}${config.paths.requesterTools}`).toString(),
             newValue, archivosProd;
 
         // Solo aplica para eliminar y modificar
@@ -472,26 +457,30 @@ function fnChangeAppChache(vinylInstance) {
             config.cache.date = moment().format('DD/MM/YYYY, h:mm:ss a');
 
             // Para service worker
-            /CACHE_VERSION \= \'(.+)\'\,/.exec(serviceWorker).forEach((match, i) => {
+            /=(\[["'].*?\])/mg.exec(serviceWorker).forEach((match, i) => {
                 switch (i) {
                     case 1:
-                        newValue = serviceWorker.replace(match, config.cache.version);
+                        archivosProd = config.cache.files.map(archivo => archivo.replace('.jade', '.html'));
+                        newValue = serviceWorker.replace(match, JSON.stringify(archivosProd));
                         break;
                 }
             });
 
-            /CACHE_FILES \= (\[([^\[]+)?\])\,/mg.exec(serviceWorker).forEach((match, i) => {
+            // Se guarda serviceWorker
+            fs.writeFileSync(`./${config.paths.prod}${config.paths.serviceWorker}`, newValue);
+
+
+            // Para requester tools
+            /(\d+\.\d+\.\d+)/mg.exec(requesterTools).forEach((match, i) => {
                 switch (i) {
                     case 1:
-                        archivosProd = config.cache.files.map(archivo => {
-                            return archivo.replace('.jade', '.html').split('/').splice(1).join('/');
-                        });
-                        newValue = newValue.replace(match, JSON.stringify(archivosProd, null, 4));
+                        newValue = requesterTools.replace(match, config.cache.version);
                         break;
                 }
             });
-            // Se guarda serviceWorker.json
-            fs.writeFileSync(`./${config.paths.dev}${config.paths.serviceWorker}`, newValue);
+
+            // Se guarda serviceWorker
+            fs.writeFileSync(`./${config.paths.prod}${config.paths.requesterTools}`, newValue);
         }
 
         // Se guarda FilesToUpdate
