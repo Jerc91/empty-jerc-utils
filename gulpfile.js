@@ -48,8 +48,8 @@ let currentTask = '',
         if (typeof _package === 'object') {
             currentPackage.globs = _package.globs;
             currentPackage.name = _package.name;
-            
-            if(!currentPackage.globs.filter(glob => glob.includes('@')).length)
+
+            if (!currentPackage.globs.filter(glob => glob.includes('@')).length)
                 currentPackage.path = _package.path || (config.paths.libs + type + pathVendor);
             else
                 currentPackage.path = _package.path || '';
@@ -69,9 +69,9 @@ let currentTask = '',
     }
 
     function getGlobs(currentPackage) {
-        let globs = currentPackage.globs.map(glob => { 
+        let globs = currentPackage.globs.map(glob => {
             let nuevoGlob = glob.toString();
-            if(nuevoGlob.includes('@')) {
+            if (nuevoGlob.includes('@')) {
                 nuevoGlob = nuevoGlob.replace('@', '');
                 currentPackage.optionsSrc.base = undefined;
             }
@@ -85,14 +85,13 @@ let currentTask = '',
         let endPath = `${config.paths.prod}${currentPackage.path}`,
             relativePath = vinylInstance.relative,
             fixedPath;
-        
+
         currentPackage.globs.filter(glob => {
             let newPath;
-            if(glob.includes('@')) {
-                if(currentPackage.path.lastIndexOf('/') != currentPackage.path.length - 1) currentPackage.path += '/';
+            if (glob.includes('@')) {
+                if (currentPackage.path.lastIndexOf('/') != currentPackage.path.length - 1) currentPackage.path += '/';
                 newPath = glob.substring(glob.indexOf('@') + 1).replace(/\\/g, '/');
-                if(newPath.includes(vinylInstance.relative)) {
-                    console.log(currentPackage.path);
+                if (newPath.includes(vinylInstance.relative)) {
                     fixedPath = `${config.paths.prod}${currentPackage.path}${newPath.replace(vinylInstance.relative, '')}`;
                 }
             }
@@ -111,14 +110,12 @@ let currentTask = '',
         return gulp.src(globs, currentPackage.optionsSrc)
             .pipe($.plumber({ errorHandler: handleError }))
             .pipe($.filter(config.types.js))
-            .pipe($.sourcemaps.init({ loadMaps: true }))
             .pipe($.concat(currentPackage.name + '.js'))
             .pipe(minifyJS({
-	            removeConsole: true,
-	            removeDebugger: true,
-	            removeUndefined: true
-	        }))
-            .pipe($.sourcemaps.write('maps'))
+                removeConsole: true,
+                removeDebugger: true,
+                removeUndefined: true
+            }))
             .pipe(gulp.dest(vinylInstance => getPackageDestPath(currentPackage, vinylInstance)));
     };
     // concatSourcemap of files css
@@ -127,14 +124,16 @@ let currentTask = '',
 
         return gulp.src(currentPackage.globs, currentPackage.optionsSrc)
             .pipe($.filter(config.types.css))
-            .pipe($.plumber({ errorHandler: handleError }))
             .pipe($.sourcemaps.init({ loadMaps: true }))
+            .pipe($.plumber({ errorHandler: handleError }))
             .pipe($.concat(currentPackage.name + '.css'))
             .pipe($.replace(/\?[\w.#}&]+\=[\w.#]+/gi, ''))
             .pipe($.replace(/(\.\.\/){1,}/gi, '../'))
             .pipe($.replace(/(@font-face( )?\{([^}]){1,}\})/gm, ''))
             .pipe($.cleanCss())
-            .pipe($.sourcemaps.write('maps'))
+            .pipe($.sourcemaps.write('.', {
+                sourceMappingURL: (file) => `${config.paths.domain}${file.relative.replace(/\\/gm, '/')}.map`
+            }))
             .pipe(gulp.dest(vinylInstance => getPackageDestPath(currentPackage, vinylInstance)));
     };
     // files fonts
@@ -169,7 +168,7 @@ let currentTask = '',
     api.buildCopy = function (_package) {
         var currentPackage = getPackage(_package, 'copy'),
             globs = getGlobs(currentPackage);
-        
+
         return gulp.src(globs, currentPackage.optionsSrc)
             .pipe($.plumber({ errorHandler: handleError }))
             .pipe(gulp.dest(vinylInstance => getPackageDestPath(currentPackage, vinylInstance)));
@@ -177,7 +176,7 @@ let currentTask = '',
     // resume functions
     api.buildPackage = function (_package) {
         let globFixed = _package.globs.filter(record => record.includes('@'));
-        if(globFixed.length) {
+        if (globFixed.length) {
             let newPakage = JSON.parse(JSON.stringify(_package));
             newPakage.globs = globFixed;
             api.buildCopy(newPakage);
@@ -206,9 +205,9 @@ gulp.task('vendor:packages', function () {
     log('Copying vendor assets packages..');
     fnGetPackages(true).forEach(_package => vendorBuild.buildPackage(fnGetPackages(_package)));
 });
-gulp.task('vendor', gulpsync.sync([
-    'bower', 'vendor:js', 'vendor:css', 'vendor:fonts', 'vendor:packages',
-    'fonts', 'buildCSS', 'buildJade', 'min:css', 'buildJade', 'min:html', 'min:js', 'min:img', 'min:json'
+gulp.task('vendor', gulpsync.sync([ 
+    'bower', 'vendor:js', 'vendor:css', 'vendor:fonts', 'vendor:packages', 
+    'build'
 ]));
 //--------------------------------------------------------------
 
@@ -219,60 +218,53 @@ gulp.task('fonts', function () {
     currentTask = `fonts`;
     log('Copying prod fonts assets...');
 
-    return gulp.src(config.paths.dev + config.types.fonts)
+    return gulp.src(`${config.paths.dev}${config.types.fonts}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe(gulp.dest(config.paths.prod));
 });
 //--------------------------------------------------------------
 
 //--------------------------------------------------------------
-// Función para compilar los archivos less
+// Función para compilar los archivos sass
 //--------------------------------------------------------------
-gulp.task('buildCSS', function () {
-    currentTask = `buildCSS`;
-    log('Copying dev less assets...');
+gulp.task('buildSass', function () {
+    currentTask = `buildSass`;
+    log('Building sass assets...');
+    let globs = [];
 
-    var pathSource = `${config.paths.dev}less/`,
-        pathDest = `${config.paths.dev}${config.paths.libs}css`,
-        streamCss, streamSass;
+    // Especificación de archivos
+    config.sass.forEach(record => {
+        let name = path.basename(record),
+            nameCss = name.replace('.scss', '.css');
 
-    // Compilación del less
-    gulp.src(config.less, { cwd: pathSource, base: pathSource })
+        gulp.src(`${config.paths.dev}sass/${name}`)
+            .pipe($.plumber({ errorHandler: handleError }))
+            .pipe($.sourcemaps.init({ loadMaps: true }))
+            .pipe($.sass({ outputStyle: 'compressed' }))
+            .pipe($.concat(nameCss))
+            .pipe($.sourcemaps.write('.', {
+                sourceMappingURL: file => {
+                    let path = file.relative.replace(/\\/gm, '/');
+                    return `${config.paths.domain}${config.paths.libs}css/${path}.map`
+                }
+            }))
+            .pipe(gulp.dest(`${config.paths.prod}${config.paths.libs}css`));
+
+        globs[globs.length] = '!' + record;
+    });
+
+    // Compilación del Sass
+    globs[globs.length] = `!${config.paths.dev}sass/${config.types.sass}`;
+    globs[globs.length] = `${config.paths.dev}${config.types.sass}`;
+    
+    gulp.src(globs, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.sourcemaps.init({ loadMaps: true }))
-        .pipe($.less())
-        .pipe($.sourcemaps.write('maps'))
-        .on('end', sass)
-        .pipe(gulp.dest(pathDest));
-
-    function sass() {
-        var promises = [];
-
-        // Compilación del Sass
-        pathSource = `${config.paths.dev}sass/`,
-        config.sass = config.sass || [];
-
-        log('Copying dev sass assets...');
-        config.sass.forEach((record) => {
-            var name = path.basename(record),
-                nameCss = name.replace('.scss', '.css');
-
-            streamSass = gulp.src(`${pathSource}${record}`).pipe($.sass()).pipe($.concat(name));
-            streamCss = gulp.src(`${pathDest}/${nameCss}`).pipe($.concat(nameCss));
-
-            promises.push(new Promise((resolve, reject) => {
-                merge(streamCss, streamSass)
-                    .on('end', resolve)                    
-                    .pipe($.plumber({ errorHandler: handleError }))
-                    .pipe($.sourcemaps.init({ loadMaps: true }))
-                    .pipe($.concat(nameCss))
-                    .pipe($.sourcemaps.write('maps'))
-                    .pipe(gulp.dest(pathDest));
-            }));
-        });
-
-        Promise.all(promises).then(() => setTimeout(() => gulp.start('min:css'), 10));
-    }
+        .pipe($.sass({ outputStyle: 'compressed' }))
+        .pipe($.sourcemaps.write('.', {
+            sourceMappingURL: file => `${config.paths.domain}${file.relative.replace(/\\/gm, '/')}.map`
+        }))
+        .pipe(gulp.dest(config.paths.prod));
 });
 //--------------------------------------------------------------
 
@@ -283,9 +275,13 @@ gulp.task('min:css', function () {
     log('Copying prod css assets...');
 
     // Copia de archivos
-    return gulp.src(config.paths.dev + config.types.css)
+    return gulp.src(`${config.paths.dev}${config.types.css}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
+        .pipe($.sourcemaps.init({ loadMaps: true }))
         .pipe($.cleanCss())
+        .pipe($.sourcemaps.write('.', {
+            sourceMappingURL: (file) => `${config.paths.domain}${file.relative.replace(/\\/gm, '/')}.map`
+        }))
         .pipe(gulp.dest(config.paths.prod));
 });
 //--------------------------------------------------------------
@@ -298,7 +294,7 @@ gulp.task('min:html', function () {
     log('Copying prod html assets...');
 
     // Copia de archivos HTML
-    gulp.src(config.paths.dev + config.types.html, { base: config.paths.dev })
+    gulp.src(`${config.paths.dev}${config.types.html}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.htmlmin({
             minifyJS: true, minifyCSS: true,
@@ -317,14 +313,14 @@ gulp.task('buildJade', function () {
     log('Building jade assets...');
 
     // Copia de archivos HTML
-    gulp.src(config.paths.dev + config.types.jade, { base: config.paths.dev + 'jade' })
+    gulp.src(`${config.paths.dev}${config.types.jade}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.jade({ petry: true }))
         .pipe($.htmlmin({
             minifyJS: true, minifyCSS: true,
             removeComments: true, collapseWhitespace: true,
             ignoreCustomFragments: [/<pre><code>[\s\S]*?<\/code><\/pre>/g]
-        }))        
+        }))
         .pipe(gulp.dest(config.paths.prod));
 });
 //--------------------------------------------------------------
@@ -337,12 +333,31 @@ gulp.task('min:js', function () {
     currentTask = `min:js`;
     log('Copying prod js assets...');
 
-    return gulp.src(config.paths.dev + config.types.js, { base: config.paths.dev + 'js' })
+    return gulp.src(`${config.paths.dev}${config.types.js}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
+        .pipe($.sourcemaps.init({ loadMaps: true }))
         .pipe(minifyJS({
             removeConsole: true,
             removeDebugger: true,
             removeUndefined: true
+        }))
+        .pipe($.sourcemaps.write('.', {
+            sourceMappingURL: file => `${config.paths.domain}${file.relative.replace(/\\/gm, '/')}.map`
+        }))
+        .pipe(gulp.dest(config.paths.prod));
+});
+
+gulp.task('optimize:js', function () {
+    let streams = [];
+    currentTask = `optimize:js`;
+    log('Optimize js assets...');
+
+    return gulp.src(config.paths.prod + config.types.js)
+        .pipe($.plumber({ errorHandler: handleError }))
+        .pipe($.sourcemaps.init({ loadMaps: true }))
+        .pipe($.optimizeJs())
+        .pipe($.sourcemaps.write('.', {
+            sourceMappingURL: file => `${config.paths.domain}${file.relative.replace(/\\/gm, '/')}.map`
         }))
         .pipe(gulp.dest(config.paths.prod));
 });
@@ -356,7 +371,7 @@ gulp.task('min:json', function () {
     log('Copying prod json assets...');
 
     // Copia de archivos
-    gulp.src(config.paths.dev + config.types.json, { base: config.paths.dev + 'json' })
+    gulp.src(`${config.paths.dev}${config.types.json}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.jsonminify())
         .pipe(gulp.dest(config.paths.prod));
@@ -371,7 +386,7 @@ gulp.task('min:img', function () {
     log('Copying prod images assets...');
 
     // Copia de archivos
-    gulp.src(config.paths.dev + config.types.img, { base: config.paths.dev + 'img' })
+    gulp.src(`${config.paths.dev}${config.types.img}`, { base: config.paths.dev })
         .pipe($.plumber({ errorHandler: handleError }))
         .pipe($.imagemin())
         .pipe(gulp.dest(config.paths.prod));
@@ -383,34 +398,41 @@ gulp.task('min:img', function () {
 gulp.task('watch', function () {
     currentTask = `watch`;
     log('Starting watch and LiveReload..');
-    $.livereload.listen();
-    let pathFile = config.paths.dev + config.paths.libs;
+    $.livereload.listen();    
 
-    // Watch
-    // Config, CSS, HTML, JS, JSON, LESS
+    // Watch Dev: Config, CSS, HTML, JS, JSON
     watchFiles([`${config.paths.dev}${config.types.css}`], ['min:css'], fnChange);
     watchFiles([`${config.paths.dev}${config.types.html}`], ['min:html'], fnChange);
     watchFiles([`${config.paths.dev}${config.types.img}`], ['min:img'], fnChange);
-    watchFiles([`${config.paths.dev}${config.types.jade}`], ['buildJade'], fnChange);
     watchFiles([`${config.paths.dev}${config.types.js}`], ['min:js'], fnChange);
     watchFiles([`${config.paths.dev}${config.types.json}`], ['min:json'], fnChange);
-    watchFiles([`${config.paths.dev}${config.types.less}`, `${config.paths.dev}${config.types.sass}`], ['buildCSS']);
+
+    // Build: JADE, SASS
+    watchFiles([`${config.paths.dev}${config.types.jade}`], ['buildJade'], undefined, true);
+    watchFiles([`${config.paths.dev}${config.types.sass}`], ['buildSass'], undefined, true);
+
+    // Watch Prod: html, css
+    watchFiles([`${config.paths.prod}${config.types.html}`], [], fnChange, config.paths.prod);
+    watchFiles([`${config.paths.prod}${config.types.css}`], [], fnChange, config.paths.prod);
 
     // Configuración de appcache
-    watchFiles(config.cache.files, [], fnChangeAppChache, true);
+    watchFiles(config.cache.files, [], fnChangeAppChache, true, config.paths.prod);
 
     // Función para observar archivos, globs
-    function watchFiles(globs, tasks, fnHandlerChange, notExclude = false) {
-        let filterArray = config.excludeWatchs.map(file => `!${config.paths.dev}${file}`);
-        
-        for (let file of config.cache.files) filterArray.push(`${!notExclude ? "!" : ''}${config.paths.dev}${file}`);
-        if(!notExclude) for (let glob of globs) filterArray.push(glob);
+    function watchFiles(globs, tasks = [], fnHandlerChange, notExclude = false, basePath = config.paths.dev) {
+        let filterArray = config.excludeWatchs.map(file => `!${basePath}${file}`);
+        for (let glob of globs) filterArray.push(glob);
 
         $.watch(filterArray, vinylInstance => {
-            if (tasks.length) gulp.start(tasks).on('end', e => $.livereload.changed(vinylInstance.path));
-            if (fnHandlerChange) {                
+            log(`The file ${vinylInstance.path} is ${vinylInstance.event}`);
+
+            if (tasks.length) gulp.start(tasks).on('end', e => {
+                $.livereload.changed(vinylInstance.path)
+                if (/\.(js|html|css)$/.test(vinylInstance.path)) $.livereload.changed(vinylInstance.path);
+            });
+            if (fnHandlerChange) {
                 fnHandlerChange(vinylInstance);
-                if (!tasks.length) $.livereload.changed(vinylInstance.path);
+                if (!tasks.length && /\.(js|html|css)$/.test(vinylInstance.path)) $.livereload.changed(vinylInstance.path);
             }
         });
     }
@@ -420,9 +442,10 @@ gulp.task('watch', function () {
 //--------------------------------------------------------------
 // Se inicia el proceso de observadores para minifficar versiones a producción
 //--------------------------------------------------------------
+gulp.task('build', ['vendor', 'fonts', 'buildSass', 'min:css', 'min:html', 'buildJade', 'min:js', 'optimize:js', 'min:json', 'min:img']);
 gulp.task('default', ['watch'], function () {
     currentTask = `gulp`;
-    filesToUpdate = require(`./${config.paths.dev}json/${config.paths.libs}config/filesToUpdate.json`);
+    filesToUpdate = require(`./${config.paths.prod}${config.paths.filesUpdate}`);
     // Se ejeccuta server
     exec(config.scriptServer);
     log('Se crea servidor');
@@ -434,10 +457,18 @@ gulp.task('default', ['watch'], function () {
 //--------------------------------------------------------------
 function fnChange(vinylInstance) {
     try {
-        if (vinylInstance.path.indexOf(config.paths.filesUpdate) > -1) return;
+        var name = path.basename(vinylInstance.path),
+            pathRelativeDev = vinylInstance.path.replace(`${__dirname}\\${config.paths.dev.replace('/','\\')}`, ''),
+            pathRelativeProd = vinylInstance.path.replace(`${__dirname}\\${config.paths.prod.replace('/','\\')}`, '');
 
-        // varables privadas
-        var name = path.basename(vinylInstance.path).replace(/\.jade$/, '.html');
+        console.log(pathRelativeDev, pathRelativeProd);
+
+        if (vinylInstance.path.indexOf(config.paths.filesUpdate) > -1) return;
+        if (config.cache.files.indexOf(pathRelativeDev.replace(/\\/g, '/')) > -1) return;
+        if (config.cache.files.indexOf(pathRelativeProd.replace(/\\/g, '/')) > -1) return;
+
+        // Solo para archivos finales
+        if(/\.(jade|sass|scss)$/gm.test(name)) return;
 
         // Solo aplica para eliminar y modificar
         if (vinylInstance.event === typeEvent.change) {
@@ -449,9 +480,7 @@ function fnChange(vinylInstance) {
         } // end else
 
         // Se guarda FilesToUpdate
-        fs.writeFileSync(`./${config.paths.dev}json/${config.paths.libs}${config.paths.filesUpdate}`, JSON.stringify(filesToUpdate, null, 4));
-        log(`The file ${name} is ${vinylInstance.event}`);
-        gulp.start(['min:json']);        
+        fs.writeFileSync(`./${config.paths.prod}${config.paths.filesUpdate}`, JSON.stringify(filesToUpdate));
     } catch (e) {
         handleError(e);
     }
@@ -460,8 +489,9 @@ function fnChange(vinylInstance) {
 function fnChangeAppChache(vinylInstance) {
     try {
         // varables privadas
-        var serviceWorker = fs.readFileSync(`./${config.paths.dev}${config.paths.serviceWorker}`).toString(),
-            newValue, archivosProd;
+        var serviceWorker = fs.readFileSync(`./${config.paths.prod}${config.paths.serviceWorker}`).toString(),
+            requesterTools = fs.readFileSync(`./${config.paths.prod}${config.paths.requesterTools}`).toString(),
+            newValue;
 
         // Solo aplica para eliminar y modificar
         if (vinylInstance.event in typeEvent) {
@@ -469,7 +499,7 @@ function fnChangeAppChache(vinylInstance) {
             config.cache.date = moment().format('DD/MM/YYYY, h:mm:ss a');
 
             // Para service worker
-            /CACHE_VERSION \= \'(.+)\'\,/.exec(serviceWorker).forEach((match, i) => {
+            /\|['"](\d+\.\d+.\d+)["']/mg.exec(serviceWorker).forEach((match, i) => {
                 switch (i) {
                     case 1:
                         newValue = serviceWorker.replace(match, config.cache.version);
@@ -477,24 +507,33 @@ function fnChangeAppChache(vinylInstance) {
                 }
             });
 
-            /CACHE_FILES \= (\[([^\[]+)?\])\,/mg.exec(serviceWorker).forEach((match, i) => {
+            /=(\[["'].*?\])/mg.exec(newValue).forEach((match, i) => {
                 switch (i) {
                     case 1:
-                        archivosProd = config.cache.files.map(archivo => {
-                            return archivo.replace('.jade', '.html').split('/').splice(1).join('/');
-                        });
-                        newValue = newValue.replace(match, JSON.stringify(archivosProd, null, 4));
+                        newValue = newValue.replace(match, JSON.stringify(config.cache.files));
                         break;
                 }
             });
-            // Se guarda serviceWorker.json
-            fs.writeFileSync(`./${config.paths.dev}${config.paths.serviceWorker}`, newValue);
+
+            // Se guarda serviceWorker
+            fs.writeFileSync(`./${config.paths.prod}${config.paths.serviceWorker}`, newValue);
+
+
+            // Para requester tools
+            /(\d+\.\d+\.\d+)/mg.exec(requesterTools).forEach((match, i) => {
+                switch (i) {
+                    case 1:
+                        newValue = requesterTools.replace(match, config.cache.version);
+                        break;
+                }
+            });
+
+            // Se guarda serviceWorker
+            fs.writeFileSync(`./${config.paths.prod}${config.paths.requesterTools}`, newValue);
         }
 
-        // Se guarda FilesToUpdate
-        log(`The file ${path.basename(vinylInstance.path)} is ${vinylInstance.event}`);        
-        fs.writeFileSync(`./config.json`, JSON.stringify(config, null, 2));
-        gulp.start(['min:json', 'min:js']);        
+        // Se actualiza la versión en el archivo de configuración
+        fs.writeFileSync('./config/config.json', JSON.stringify(config, null, 2));
     } catch (e) {
         handleError(e);
     }
@@ -542,7 +581,7 @@ function fnGetPackages(single = false) {
         if (single === true) {
             let packages = vendorFiles.filter(record => typeof record == 'object');
 
-            if(vendorFiles.filter(record => typeof record == 'string' && record.includes('@')).length){
+            if (vendorFiles.filter(record => typeof record == 'string' && record.includes('@')).length) {
                 packages.push({
                     '': vendorFiles.filter(record => typeof record == 'string' && record.includes('@'))
                 });
