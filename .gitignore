@@ -1,5 +1,8 @@
 ﻿# Dist
 dist/
+package-lock.json
+*.njsproj
+*-njsproj.vspscc
 
 # Logs
 logs
