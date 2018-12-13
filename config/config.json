@@ -4,7 +4,6 @@
     "path": "./config/vendor.json"
   },
   "paths": {
-    "packages": "./bower_components/",
     "dev": "src/",
     "prod": "dist/",
     "libs": "assets/",
@@ -17,20 +16,21 @@
     "fonts": "**/*.{ttf,svg,woff,woff2,eot,otf}",
     "html": "**/*.html",
     "img": "**/*.{jpg,png,gif,ico}",
-    "jade": "**/*.jade",
+    "pug": "**/*.{jade,pug}",
     "js": "**/*.js",
     "json": "**/*.json",
     "less": "**/*.less",
-    "sass": "**/*.scss"
+    "sass": "**/*.{scss,sass}"
   },
   "excludeWatchs": [
     "**/filesToUpdate.json",
-    "**/service-worker.js"
+    "**/service-worker.js",
+    "**/requester-tools.js"
   ],
   "server": {
-    "sslKey": "./config/server.key",
-    "sslCrt": "./config/server.crt",
-    "httpPort": 80,
+    "sslKey": "./config/ssl/server.key",
+    "sslCrt": "./config/ssl/server.crt",
+    "httpPort": 4000,
     "httpsPort": 443,
     "portLivereload": 444,
     "urlApp": "127.0.0.1"
@@ -39,19 +39,23 @@
     "main.scss"
   ],
   "cache": {
-    "version": "0.0.1",
-    "date": "09/02/2018, 4:24:46 pm",
+    "version": "0.0.61",
+    "date": "05/12/2018, 11:45:26 am",
     "files": [
-      "assets/fonts/fontawesome-webfont.ttf",
-      "assets/fonts/fontawesome-webfont.woff2",
-      "assets/fonts/roboto/Roboto-Light.ttf",
+      "assets/fonts/fontawesome/fa-brands-400.eot",
+      "assets/fonts/fontawesome/fa-brands-400.woff2",
+      "assets/fonts/fontawesome/fa-regular-400.eot",
+      "assets/fonts/fontawesome/fa-regular-400.woff2",
+      "assets/fonts/fontawesome/fa-solid-900.eot",
+      "assets/fonts/fontawesome/fa-solid-900.woff2",
       "assets/fonts/roboto/Roboto-Light.woff2",
       "assets/js/jmain.js",
       "assets/js/workers/requester-tools.js",
       "assets/js/workers/requester-worker.js",
       "favicon.ico",
-      "index.jade",
-      "scripts/app.js"
+      "index.html",
+      "scripts/app.js",
+      "service-worker.js"
     ]
   },
   "scriptServer": "node app"

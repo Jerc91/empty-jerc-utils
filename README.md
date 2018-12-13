@@ -1,2 +1,2 @@
 # empty-jerc-utils
-Use jerc-utils for empty projects
+Proyecto para el uso la librería jerc-utils

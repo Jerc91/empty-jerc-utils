@@ -1,29 +1,39 @@
 ﻿[
-  "font-awesome/fonts/fontawesome-webfont.ttf",
-  "font-awesome/fonts/fontawesome-webfont.woff2",
-
-  "bootstrap/dist/css/bootstrap.css",
-  "font-awesome/css/font-awesome.css",
-
   {
-    "assets/fonts/roboto": [
-      "roboto-fontface/fonts/roboto/Roboto-Light.ttf",
-      "roboto-fontface/fonts/roboto/Roboto-Light.woff2"
-    ]
+    "from": [
+      "node_modules/bootstrap/dist/css/bootstrap.css",
+      "node_modules/@fortawesome/fontawesome-free/css/fontawesome.css"
+    ],
+    "to": "assets/css/vendor.css"
   },
-  {
-    "compiler": [
-      "hogan.js/web/builds/3.0.2/hogan-3.0.2.js"
-    ]
+
+  { 
+    "from": "node_modules/@fortawesome/fontawesome-free/webfonts/*.{woff2,eot}", 
+    "to": "assets/fonts/fontawesome"
   },
 
   {
-    "assets/js": [
-      "jerc-utils/dist/JMain/js/@jmain.js",
-      "jerc-utils/dist/JMain/js/@workers/requester-tools.js",
-      "jerc-utils/dist/JMain/js/@workers/requester-worker.js"
-    ]
+    "from": "node_modules/roboto-fontface/fonts/roboto/roboto-light.woff2",
+    "to": "assets/fonts/roboto"
+  },
+
+  {
+    "from": "node_modules/hogan.js/dist/hogan-3.0.2.js",
+    "to": "assets/js/compiler.js"
+  },
+
+  {
+    "from": "node_modules/jerc-utils/src/JMain/js/jmain.js",
+    "to": "assets/js"
+  },
+
+  {
+    "from": "node_modules/jerc-utils/src/JMain/js/workers/*.js",
+    "to": "assets/js/workers"
   },
   
-  "jerc-utils/dist/JMain/@service-worker.js"
+  {
+    "from": "node_modules/jerc-utils/src/JMain/service-worker.js",
+    "to": ""
+  }
 ]
